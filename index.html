@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MV MEN STYLE - Thời Trang Nam</title>
+    
+    <!-- PapaParse: Thư viện xử lý CSV mạnh mẽ -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* --- DESIGN SYSTEM --- */
+        :root {
+            --bg-body: #121212;
+            --bg-card: #1e1e1e;
+            --primary-gold: linear-gradient(45deg, #d4af37, #f9d423);
+            --text-main: #ffffff;
+            --text-muted: #b3b3b3;
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --overlay: rgba(0, 0, 0, 0.85);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* --- LOADING SCREEEN --- */
+        #loading-screen {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-body);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top: 3px solid #d4af37;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* --- HEADER --- */
+        header {
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            letter-spacing: 4px;
+            font-weight: 800;
+            background: var(--primary-gold);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-top: 5px;
+            letter-spacing: 2px;
+        }
+
+        /* --- CATEGORY GRID --- */
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* Mobile: 2 cột */
+            gap: 15px;
+        }
+
+        @media (min-width: 768px) {
+            .category-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+
+        .category-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 1px solid #333;
+        }
+
+        .category-card:hover {
+            transform: translateY(-5px);
+            border-color: #d4af37;
+        }
+
+        .category-thumb {
+            width: 100%;
+            aspect-ratio: 1/1;
+            object-fit: cover;
+            display: block;
+        }
+
+        .category-info {
+            padding: 15px;
+            text-align: center;
+        }
+
+        .category-info h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        /* --- MODAL / POPUP --- */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: var(--overlay);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: none; /* Ẩn mặc định */
+            justify-content: center;
+            align-items: flex-end; /* Hiện từ dưới lên trên mobile */
+        }
+
+        @media (min-width: 768px) {
+            .modal { align-items: center; }
+        }
+
+        .modal-content {
+            background: #1a1a1a;
+            width: 100%;
+            max-width: 600px;
+            max-height: 85vh;
+            border-top-left-radius: 25px;
+            border-top-right-radius: 25px;
+            padding: 25px;
+            position: relative;
+            overflow-y: auto;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+        }
+
+        @media (min-width: 768px) {
+            .modal-content { border-radius: 20px; }
+        }
+
+        .close-btn {
+            position: sticky;
+            top: 0;
+            float: right;
+            background: #333;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #d4af37;
+            text-transform: uppercase;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+
+        /* --- PRODUCT LIST IN MODAL --- */
+        .product-item {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #252525;
+        }
+
+        .product-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .product-detail {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .product-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            line-height: 1.4;
+            margin-bottom: 5px;
+        }
+
+        .product-price {
+            color: #ff4d4d;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .buy-btn {
+            background: var(--primary-gold);
+            color: #000;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-align: center;
+            display: inline-block;
+            margin-top: 10px;
+            transition: var(--transition);
+        }
+
+        .buy-btn:active { transform: scale(0.95); }
+
+        /* Animation */
+        .slideUp {
+            animation: slideUp 0.4s ease-out;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Màn hình Loading -->
+    <div id="loading-screen">
+        <div class="spinner"></div>
+        <p>ĐANG TẢI DỮ LIỆU...</p>
+    </div>
+
+    <header>
+        <div class="container">
+            <h1>MV MEN STYLE</h1>
+            <p>EST. 2026 | LUXURY ESSENTIALS</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Lưới danh mục sẽ render vào đây -->
+        <div class="category-grid" id="category-container"></div>
+    </main>
+
+    <!-- Modal hiển thị sản phẩm -->
+    <div class="modal" id="product-modal">
+        <div class="modal-content" id="modal-content-area">
+            <div class="close-btn" onclick="closeModal()">
+                <i class="fa-solid fa-xmark"></i>
+            </div>
+            <h2 id="modal-category-title" class="modal-title">DANH MỤC</h2>
+            <div id="product-list-container">
+                <!-- Sản phẩm sẽ render vào đây -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSKKC6vgDsfAhMbVR0mfrcx0QTD7mGfMp7E2oJYXQUv_DffNYv7IPHQ6_Umgwh7K3f80OElxF_-uT1L/pub?gid=0&single=true&output=csv';
+        const PLACEHOLDER_IMG = 'https://placehold.co/400x400/1e1e1e/ffffff?text=MV+MEN+STYLE';
+
+        let globalData = [];
+        let groupedData = {};
+
+        // 1. Khởi tạo - Tải dữ liệu CSV
+        function init() {
+            Papa.parse(CSV_URL, {
+                download: true,
+                header: true,
+                complete: function(results) {
+                    globalData = results.data.filter(item => item.TenSanPham); // Loại bỏ dòng trống
+                    processGroups(globalData);
+                    document.getElementById('loading-screen').style.display = 'none';
+                },
+                error: function(err) {
+                    alert("Lỗi tải dữ liệu. Vui lòng kiểm tra lại link Google Sheets!");
+                }
+            });
+        }
+
+        // 2. Nhóm dữ liệu theo Danh Mục
+        function processGroups(data) {
+            groupedData = data.reduce((acc, obj) => {
+                let key = obj.DanhMuc;
+                if (!acc[key]) acc[key] = [];
+                acc[key].push(obj);
+                return acc;
+            }, {});
+
+            renderCategories();
+        }
+
+        // 3. Render lưới Danh Mục
+        function renderCategories() {
+            const container = document.getElementById('category-container');
+            container.innerHTML = '';
+
+            Object.keys(groupedData).forEach(catName => {
+                const firstProd = groupedData[catName][0];
+                const card = document.createElement('div');
+                card.className = 'category-card';
+                card.onclick = () => openModal(catName);
+                
+                card.innerHTML = `
+                    <img class="category-thumb" src="${firstProd.LinkAnh}" onerror="this.src='${PLACEHOLDER_IMG}'" alt="${catName}">
+                    <div class="category-info">
+                        <h3>${catName}</h3>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // 4. Mở Modal chi tiết
+        function openModal(catName) {
+            const modal = document.getElementById('product-modal');
+            const title = document.getElementById('modal-category-title');
+            const listContainer = document.getElementById('product-list-container');
+            const contentArea = document.getElementById('modal-content-area');
+
+            title.innerText = catName;
+            listContainer.innerHTML = ''; // Clear cũ
+
+            groupedData[catName].forEach(prod => {
+                const item = document.createElement('div');
+                item.className = 'product-item';
+                item.innerHTML = `
+                    <img class="product-img" src="${prod.LinkAnh}" onerror="this.src='${PLACEHOLDER_IMG}'">
+                    <div class="product-detail">
+                        <div>
+                            <div class="product-name">${prod.TenSanPham}</div>
+                            <div class="product-price">${formatVND(prod.Gia)}</div>
+                        </div>
+                        <a href="${prod.LinkAffiliate}" target="_blank" class="buy-btn">
+                            MUA NGAY TRÊN SHOPEE <i class="fa-solid fa-chevron-right"></i>
+                        </a>
+                    </div>
+                `;
+                listContainer.appendChild(item);
+            });
+
+            modal.style.display = 'flex';
+            contentArea.classList.add('slideUp');
+            document.body.style.overflow = 'hidden'; // Chống cuộn nền
+        }
+
+        // 5. Đóng Modal
+        function closeModal() {
+            const modal = document.getElementById('product-modal');
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // Đóng modal khi click ra ngoài vùng content
+        window.onclick = function(event) {
+            const modal = document.getElementById('product-modal');
+            if (event.target == modal) closeModal();
+        }
+
+        // 6. Helper: Định dạng tiền tệ
+        function formatVND(value) {
+            if(!value) return "Liên hệ";
+            // Xóa mọi ký tự không phải số
+            let num = value.toString().replace(/[^0-9]/g, "");
+            return new Intl.NumberFormat('vi-VN').format(num) + "đ";
+        }
+
+        // Chạy ứng dụng
+        init();
+    </script>
+</body>
+</html>
